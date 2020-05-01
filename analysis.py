@@ -31,6 +31,7 @@ FIGURES_PATH = Path(__file__).parent.joinpath('figures')
 
 YEARS = list(range(1800, 2000, 10))
 TEXTS = ['infinitejest', 'mobydick', 'prideandprejudice', 'gatsby']
+TITLES = {'infinitejest': 'Infinite Jest', 'mobydick': 'Moby Dick', 'prideandprejudice': 'Pride and Prejudice', 'gatsby': 'The Great Gatsby'}
 
 ################################################################################
 # chaos stuff
@@ -233,15 +234,84 @@ def moby(title='mobydick', year=1860):
 
     # print(len(moby_words))
 
+def wolfit():
+    for title in TEXTS:
+        print(title)
+        for year in YEARS:
+            results = get_title_embedded_in_year(title, year)
+
+            noise = np.random.normal(0, .01, results.shape)
+
+            out = wolfs_algorithm(results + noise, epsilon=5, angle=pi / 9)
+            print(f'{year}: {out}')
+
+
 def preprocess_texts():
     for title in TEXTS:
         print(title)
         get_title_words(title)
+        for year in YEARS:
+            print(year)
+            results = get_title_embedded_in_year(title, year)
     1
+
+
+def zipf():
+    from collections import Counter
+    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+    1
+    for title in TEXTS:
+        print(title)
+        words = get_title_words(title)
+        c = Counter(words)
+        words_by_count = [(k, v) for k, v in c.items() if v > 1]
+        words_by_count.sort(key=lambda x: x[1], reverse=True)
+        _ws, _cs = list(zip(*words_by_count))
+        ax.plot([i for i in range(len(_ws))], _cs, label=TITLES[title])
+
+    ax.set_title("Word occurrences")
+    ax.legend()
+
+
+
+def stats():
+    year_words = set(EMBEDDINGS_PATH.joinpath(f'1800_words.txt').read_text().split("\n"))
+    year_embeddings = np.load(EMBEDDINGS_PATH.joinpath(f'1800_embeddings.npy'))
+
+    words_by_title = dict()
+    words_by_title['embeddings'] = year_words
+
+    in_sample_words_by_title = dict()
+    for title in TEXTS:
+        print(title)
+        words_by_title[title] = set(get_title_words(title))
+        in_sample_words_by_title[title] = year_words & words_by_title[title]
+        print(len(words_by_title[title]))
+        print(len(in_sample_words_by_title[title]))
+
+    import itertools
+    print(words_by_title.keys())
+    matrix = []
+    for p1 in words_by_title:
+        row = []
+        for p2 in words_by_title:
+            row.append(len(words_by_title[p1] & words_by_title[p2]))
+
+        matrix.append(row)
+
+
+    import pprint
+    pp = pprint.PrettyPrinter()
+    pp.pprint(matrix)
+
+
 
 PROBLEMS = {
     'moby': moby,
+    'wolfit': wolfit,
     'preprocess': preprocess_texts,
+    'zipf': zipf,
+    'stats': stats,
 }
 
 
